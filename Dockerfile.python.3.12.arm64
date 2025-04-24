@@ -5,7 +5,7 @@ ENTRYPOINT []
 RUN dnf install -y glibc-gconv-extra
 
 # Copy gconv extra files
-RUN mkdir /opt/lib/gconv;cp -r /usr/lib64/gconv /opt/lib
+RUN mkdir -p /opt/lib/gconv;cp -r /usr/lib64/gconv /opt/lib
 
 # Generate the zipped file that can be uploaded as a Lambda Layer
 WORKDIR /opt

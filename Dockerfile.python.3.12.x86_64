@@ -1,0 +1,13 @@
+FROM public.ecr.aws/sam/build-python3.12
+ENTRYPOINT []
+
+# Install glibc-gconv-extra
+RUN dnf install -y glibc-gconv-extra
+
+# Copy gconv extra files
+RUN mkdir -p /opt/lib/gconv;cp -r /usr/lib64/gconv /opt/lib
+
+# Generate the zipped file that can be uploaded as a Lambda Layer
+WORKDIR /opt
+RUN zip -r /layer.zip .
+

@@ -1,0 +1,64 @@
+name: Create Lambda Layer
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        architecture: [x86_64, arm64]
+        python-version: ['3.12','3.13']
+        include:
+          - architecture: x86_64
+            runner: ubuntu-latest
+          - architecture: arm64
+            runner: ubuntu-24.04-arm
+        
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build the Docker image
+      run: |
+        docker buildx build --load --platform linux/${{ matrix.architecture }} --file Dockerfile.python.${{ matrix.python-version }}.${{ matrix.architecture }} --tag glibc-gconv-extra-${{ matrix.architecture }} .
+
+    - name: Create Container from Image
+      run: |
+        docker run --platform linux/${{ matrix.architecture }} --rm --volume $(pwd):/tmp glibc-gconv-extra-${{ matrix.architecture }} cp /layer.zip /tmp/glibc-gconv-extra-${{ matrix.python-version }}-${{ matrix.architecture }}.zip
+
+    - name: Upload layer artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: glibc-gconv-extra-${{ matrix.python-version }}-${{ matrix.architecture }}
+        path: glibc-gconv-extra-${{ matrix.python-version }}-${{ matrix.architecture }}.zip
+        retention-days: 1
+
+  create-release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+
+      - name: List artifacts
+        run: find
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          artifacts: "glibc-gconv-extra-*/*.zip"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref_name }}
+          body: |
+            # Layer Package Release
+
+            > [!IMPORTANT]
+            > Remember to set the Lambda environment variable GCONV_PATH=/opt/lib/gconv

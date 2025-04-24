@@ -33,7 +33,7 @@ jobs:
     - name: Upload layer artifact
       uses: actions/upload-artifact@v4
       with:
-        name: glibc-gconv-extra-python-${{ matrix.python-version }}-${{ matrix.architecture }}
+        name: glibc-gconv-extra-${{ matrix.python-version }}-${{ matrix.architecture }}
         path: glibc-gconv-extra-${{ matrix.python-version }}-${{ matrix.architecture }}.zip
         retention-days: 1
 
